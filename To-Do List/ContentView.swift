@@ -7,29 +7,42 @@
 
 import SwiftUI
 struct ContentView: View {
-    @State private var toDoItems =
-    [ToDoItem(priority:"High", description:"Take out trash", dueDate:Date()),
-     ToDoItem(priority:"Medium", description:"Pick up clothes", dueDate:Date()),
-     ToDoItem(priority:"Low", description:"Eat a donut", dueDate:Date())]
-    
+    @ObservedObject var toDoList = ToDoList()
+    @State private var showingAddItemView = false
     var body: some View {
         NavigationView {
             List {
-                ForEach (toDoItems) {thing in
-                    Text(toDoItems.description)
+                ForEach (toDoList.items) { item in
+                    HStack {
+                        VStack(alignment : .leading) {
+                            Text(item.priority)
+                                .font(.headline)
+                            Text(item.description)
+                        }
+                        Spacer()
+                        Text(item.dueDate, style: .date)
+                    }
                 }
-                .onMove { indices, newOffset in
-                    toDoItems.move(fromOffsets: indices, toOffset: newOffset)
+                    .onMove { indices, newOffset in
+                        toDoList.items.move(fromOffsets: indices, toOffset: newOffset)
+                    }
+                    .onDelete { IndexSet in
+                        toDoList.items.remove(atOffsets: IndexSet)
+                    }
                 }
-                .onDelete { IndexSet in
-                    toDoItems.remove(atOffsets: IndexSet)
-                }
+            .sheet(isPresented: $showingAddItemView, content: {
+                AddItemView(toDoList: toDoList)
+            })
+                .navigationBarTitle("To Do List")
+                .navigationBarItems(leading:EditButton(),
+                                    trailing: Button(action: {
+                    showingAddItemView = true}) {
+                        Image(systemName: "plus")
+                })
             }
-            .navigationBarTitle("To Do List", displayMode: .inline)
-            .navigationBarItems(leading:EditButton())
         }
     }
-}
+
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
